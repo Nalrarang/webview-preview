@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mobile WebView App</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <main class="container">
+      <h1>Mobile WebView App</h1>
+      
+      <div class="form-section">
+        <form id="webview-form">
+          <div class="input-group">
+            <label for="url-input">URL:</label>
+            <input 
+              id="url-input" 
+              type="url" 
+              placeholder="https://example.com" 
+              value="https://m.naver.com"
+              required 
+            />
+          </div>
+          
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" id="devtools-checkbox" />
+              Enable DevTools
+            </label>
+          </div>
+          
+          <button type="submit">Open WebView</button>
+        </form>
+      </div>
+
+      <div class="js-section">
+        <h3>JavaScript Executor</h3>
+        <textarea 
+          id="js-input" 
+          placeholder="Enter JavaScript code to execute in webview..."
+          rows="4"
+        ></textarea>
+        <button id="execute-js-btn">Execute JS</button>
+      </div>
+
+      <div id="status-msg"></div>
+    </main>
+  </body>
+</html>

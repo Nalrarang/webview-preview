@@ -1,0 +1,166 @@
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  color: #0f0f0f;
+  background-color: #f6f6f6;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+.container {
+  margin: 0;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.form-section, .js-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.checkbox-group {
+  margin-bottom: 1.5rem;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+input[type="url"], textarea {
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  padding: 0.75rem;
+  font-size: 1em;
+  font-family: inherit;
+  color: #0f0f0f;
+  background-color: #ffffff;
+  transition: border-color 0.25s;
+  box-sizing: border-box;
+}
+
+input[type="url"]:focus, textarea:focus {
+  outline: none;
+  border-color: #396cd8;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+button {
+  width: 100%;
+  border-radius: 8px;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  color: white;
+  background-color: #396cd8;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+
+button:hover {
+  background-color: #2d5bb7;
+}
+
+button:active {
+  background-color: #1e4a9f;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+  margin-bottom: 1rem;
+}
+
+#status-msg {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+#status-msg.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+#status-msg.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.js-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #f6f6f6;
+    background-color: #2f2f2f;
+  }
+
+  .form-section, .js-section {
+    background-color: #1a1a1a;
+    color: #f6f6f6;
+  }
+
+  input[type="url"], textarea {
+    color: #f6f6f6;
+    background-color: #2d2d2d;
+    border-color: #404040;
+  }
+
+  input[type="url"]:focus, textarea:focus {
+    border-color: #5a8def;
+  }
+
+  #status-msg.success {
+    background-color: #1e4d2b;
+    color: #a7d4aa;
+    border-color: #2d5a34;
+  }
+
+  #status-msg.error {
+    background-color: #4d1e24;
+    color: #d4a7aa;
+    border-color: #5a2d34;
+  }
+}

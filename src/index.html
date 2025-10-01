@@ -9,44 +9,74 @@
   </head>
 
   <body>
-    <main class="container">
-      <h1>Mobile WebView App</h1>
-      
-      <div class="form-section">
-        <form id="webview-form">
-          <div class="input-group">
-            <label for="url-input">URL:</label>
-            <input 
-              id="url-input" 
-              type="url" 
-              placeholder="https://example.com" 
-              value="https://m.naver.com"
-              required 
-            />
+    <!-- 로딩 스크린 (초기에만 표시) -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-content">
+        <h1>Mobile WebView App</h1>
+        <p>Loading default URL...</p>
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- 분할 뷰 컨테이너 -->
+    <div class="split-container">
+      <!-- 좌측 컨트롤 패널 -->
+      <div class="control-panel">
+        <div class="panel-header">
+          <h2>WebView Controller</h2>
+        </div>
+
+        <div class="panel-content">
+          <div class="form-section">
+            <h3>URL Settings</h3>
+            <form id="webview-form">
+              <div class="input-group">
+                <label for="url-input">URL:</label>
+                <input
+                  id="url-input"
+                  type="url"
+                  placeholder="https://example.com"
+                  value="https://alpha.wms.kakaostyle.com"
+                  required
+                />
+              </div>
+
+              <div class="checkbox-group">
+                <label>
+                  <input type="checkbox" id="devtools-checkbox" />
+                  Enable DevTools (F12)
+                </label>
+              </div>
+
+              <button type="submit">Navigate to URL</button>
+            </form>
           </div>
-          
-          <div class="checkbox-group">
-            <label>
-              <input type="checkbox" id="devtools-checkbox" />
-              Enable DevTools
-            </label>
+
+          <div class="js-section">
+            <h3>JavaScript Executor</h3>
+            <textarea
+              id="js-input"
+              placeholder="Enter JavaScript code to execute..."
+              rows="4"
+            ></textarea>
+            <button id="execute-js-btn">Execute JS</button>
           </div>
-          
-          <button type="submit">Open WebView</button>
-        </form>
+
+          <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <button id="reload-btn">Reload Page</button>
+            <button id="default-url-btn">Load Default URL</button>
+          </div>
+        </div>
       </div>
 
-      <div class="js-section">
-        <h3>JavaScript Executor</h3>
-        <textarea 
-          id="js-input" 
-          placeholder="Enter JavaScript code to execute in webview..."
-          rows="4"
-        ></textarea>
-        <button id="execute-js-btn">Execute JS</button>
+      <!-- 우측 웹뷰 영역 (Tauri가 여기에 웹뷰를 삽입) -->
+      <div class="webview-container" id="webview-container">
+        <!-- Tauri webview will be rendered here -->
       </div>
+    </div>
 
-      <div id="status-msg"></div>
-    </main>
+    <!-- 상태 메시지 -->
+    <div id="status-msg"></div>
   </body>
 </html>

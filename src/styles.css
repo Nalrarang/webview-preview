@@ -19,7 +19,7 @@
 }
 
 body {
-  width: 350px;
+  width: 375px;
   height: 667px;
   overflow: hidden;
   position: relative;
@@ -73,41 +73,89 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+/* 메뉴 토글 버튼 (바코드 입력 영역 내) */
+.menu-toggle-btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-right: 1px solid #e1e5e9;
+  background-color: #396cd8;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menu-toggle-btn:hover {
+  background-color: #2d5bb7;
+}
+
+.menu-toggle-btn:active {
+  background-color: #1e4a9f;
+}
+
 /* 분할 뷰 컨테이너 */
 .split-container {
   display: block;
-  width: 350px;
-  height: 667px;
+  width: 375px;
+  height: 617px;
   position: relative;
   overflow: hidden;
 }
 
-/* 좌측 컨트롤 패널 */
+/* 우측 컨트롤 패널 */
 .control-panel {
   width: 350px;
-  height: 667px;
+  height: 617px;
   background-color: #ffffff;
-  border-right: 1px solid #e1e5e9;
-  display: flex;
+  border-left: 1px solid #e1e5e9;
+  display: none;
   flex-direction: column;
   overflow: hidden;
-  position: absolute;
+  position: fixed;
   top: 0;
-  left: 0;
-  z-index: 1000;
+  right: 0;
+  z-index: 1500;
   pointer-events: auto;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.control-panel.open {
+  display: flex;
 }
 
 .panel-header {
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #e1e5e9;
   background-color: #396cd8;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .panel-header h2 {
   margin: 0;
   font-size: 1.2rem;
+}
+
+.menu-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .panel-content {
@@ -203,29 +251,62 @@ textarea {
   display: none;
 }
 
-/* 상태 메시지 */
-#status-msg {
+/* 바코드 입력 컨테이너 (하단 고정) */
+.barcode-input-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  max-width: 300px;
-  z-index: 1002;
-  backdrop-filter: blur(10px);
+  bottom: 0;
+  left: 0;
+  width: 375px;
+  height: 50px;
+  background-color: #ffffff;
+  border-top: 2px solid #396cd8;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding: 0;
 }
 
-#status-msg.success {
-  background-color: rgba(212, 237, 218, 0.9);
-  color: #155724;
-  border: 1px solid rgba(195, 230, 203, 0.5);
+.barcode-form {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 0;
 }
 
-#status-msg.error {
-  background-color: rgba(248, 215, 218, 0.9);
-  color: #721c24;
-  border: 1px solid rgba(245, 198, 203, 0.5);
+.barcode-form input {
+  flex: 1;
+  border: none;
+  padding: 0 1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #0f0f0f;
+  background-color: #ffffff;
+  outline: none;
+}
+
+.barcode-form button {
+  width: 50px;
+  border: none;
+  border-left: 1px solid #e1e5e9;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 600;
+  font-family: inherit;
+  color: white;
+  background-color: #396cd8;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.barcode-form button:hover {
+  background-color: #2d5bb7;
+}
+
+.barcode-form button:active {
+  background-color: #1e4a9f;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -263,17 +344,5 @@ textarea {
 
   .webview-container {
     background-color: #2f2f2f;
-  }
-
-  #status-msg.success {
-    background-color: rgba(30, 77, 43, 0.9);
-    color: #a7d4aa;
-    border-color: rgba(45, 90, 52, 0.5);
-  }
-
-  #status-msg.error {
-    background-color: rgba(77, 30, 36, 0.9);
-    color: #d4a7aa;
-    border-color: rgba(90, 45, 52, 0.5);
   }
 }

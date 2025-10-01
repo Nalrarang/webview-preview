@@ -80,6 +80,38 @@ fn open_devtools(window: tauri::Window) -> Result<(), String> {
     Err("Child webview 'webview' not found".to_string())
 }
 
+#[tauri::command]
+fn resize_window(window: tauri::Window, width: f64, height: f64) -> Result<(), String> {
+    match window.set_size(LogicalSize::new(width, height)) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to resize window: {}", e))
+    }
+}
+
+#[tauri::command]
+fn move_webview(window: tauri::Window, x: f64, y: f64) -> Result<(), String> {
+    let webviews = window.webviews();
+
+    for webview in webviews {
+        let label = webview.label();
+        if label == "webview" {
+            match webview.set_position(LogicalPosition::new(x, y)) {
+                Ok(_) => return Ok(()),
+                Err(e) => return Err(format!("Failed to move webview: {}", e))
+            }
+        }
+    }
+    Err("Child webview 'webview' not found".to_string())
+}
+
+#[tauri::command]
+fn set_always_on_top(window: tauri::Window, always_on_top: bool) -> Result<(), String> {
+    match window.set_always_on_top(always_on_top) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to set always on top: {}", e))
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -89,30 +121,34 @@ pub fn run() {
             get_url_validation,
             navigate_to_url,
             execute_js_in_webview,
-            open_devtools
+            open_devtools,
+            resize_window,
+            move_webview,
+            set_always_on_top
         ])
         .setup(|app| {
-            // 메인 창 생성 (컨트롤 패널이 포함된 HTML)
-            // 전체 창 크기: 컨트롤 패널(350px) + 웹뷰(375px) = 725px 너비
+            // 메인 창 생성 (모바일 사이즈 + 하단 바코드 입력)
+            // 전체 창 크기: 375px x 667px (웹뷰 617px + 바코드 입력 50px)
             let main_window = WebviewWindowBuilder::new(
                 app,
                 "main",
                 WebviewUrl::App("index.html".into())
             )
             .title("Mobile WebView App")
-            .inner_size(725.0, 667.0)
+            .inner_size(375.0, 667.0)
             .position(100.0, 100.0)
+            .always_on_top(true)
             .build()
             .expect("Failed to create main window");
 
-            // Window 객체로 접근하여 차일드 웹뷰 추가 (모바일 사이즈: 375x667)
+            // Window 객체로 접근하여 차일드 웹뷰 추가 (상단 617px)
             let window = main_window.as_ref().window();
             let _child_webview = window.add_child(
                 WebviewBuilder::new("webview", WebviewUrl::External(
                     url::Url::parse("https://alpha.wms.kakaostyle.com").unwrap()
                 )),
-                LogicalPosition::new(350.0, 0.0),
-                LogicalSize::new(375.0, 667.0)
+                LogicalPosition::new(0.0, 0.0),
+                LogicalSize::new(375.0, 617.0)
             )
             .expect("Failed to add child webview");
 

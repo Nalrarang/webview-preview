@@ -20,10 +20,11 @@
 
     <!-- 분할 뷰 컨테이너 -->
     <div class="split-container">
-      <!-- 좌측 컨트롤 패널 -->
-      <div class="control-panel">
+      <!-- 좌측 컨트롤 패널 (슬라이드) -->
+      <div class="control-panel" id="control-panel">
         <div class="panel-header">
           <h2>WebView Controller</h2>
+          <button id="menu-close" class="menu-close">×</button>
         </div>
 
         <div class="panel-content">
@@ -45,6 +46,13 @@
                 <label>
                   <input type="checkbox" id="devtools-checkbox" />
                   Enable DevTools (F12)
+                </label>
+              </div>
+
+              <div class="checkbox-group">
+                <label>
+                  <input type="checkbox" id="always-on-top-checkbox" checked />
+                  Always on Top
                 </label>
               </div>
 
@@ -76,7 +84,18 @@
       </div>
     </div>
 
-    <!-- 상태 메시지 -->
-    <div id="status-msg"></div>
+    <!-- 바코드 입력 (하단 고정) -->
+    <div class="barcode-input-container" id="barcode-container">
+      <button id="menu-toggle" class="menu-toggle-btn">⚙️</button>
+      <form id="barcode-form" class="barcode-form">
+        <input
+          id="barcode-input"
+          type="text"
+          placeholder="Scan or enter barcode..."
+          autocomplete="off"
+        />
+        <button type="submit" id="barcode-submit">✓</button>
+      </form>
+    </div>
   </body>
 </html>

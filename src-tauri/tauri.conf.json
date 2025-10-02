@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "mobile-webview-app",
+  "productName": "mobile-webview-preview",
   "version": "0.1.0",
-  "identifier": "com.evanoh.mobile-webview-app",
+  "identifier": "com.evanoh.mobile-webview-preview",
   "build": {
     "frontendDist": "../src"
   },

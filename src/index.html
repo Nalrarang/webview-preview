@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mobile WebView App</title>
+    <title>Mobile WebView Preview</title>
     <script type="module" src="/main.js" defer></script>
   </head>
 
@@ -12,7 +12,7 @@
     <!-- 로딩 스크린 (초기에만 표시) -->
     <div id="loading-screen" class="loading-screen">
       <div class="loading-content">
-        <h1>Mobile WebView App</h1>
+        <h1>Mobile WebView Preview</h1>
         <p>Loading default URL...</p>
         <div class="spinner"></div>
       </div>
@@ -31,8 +31,12 @@
           <div class="form-section">
             <h3>URL Settings</h3>
             <form id="webview-form">
+              <div class="default-url-info">
+                <span class="default-url-label">Default URL:</span>
+                <span id="default-url-display" class="default-url-value">Not set</span>
+              </div>      
+
               <div class="input-group">
-                <label for="url-input">URL:</label>
                 <input
                   id="url-input"
                   type="url"
@@ -56,25 +60,39 @@
                 </label>
               </div>
 
+              <div class="checkbox-group">
+                <label>
+                  <input type="checkbox" id="show-barcode-checkbox" checked />
+                  Show Barcode Input
+                </label>
+              </div>
+
+              <div class="default-url-section">
+                <button type="button" id="set-default-url-btn" class="secondary-btn">
+                  Set as Default URL
+                </button>
+                <button type="button" id="clear-default-url-btn" class="secondary-btn">
+                  Clear URL
+                </button>
+              </div>
+
               <button type="submit">Navigate to URL</button>
             </form>
-          </div>
-
-          <div class="js-section">
-            <h3>JavaScript Executor</h3>
-            <textarea
-              id="js-input"
-              placeholder="Enter JavaScript code to execute..."
-              rows="4"
-            ></textarea>
-            <button id="execute-js-btn">Execute JS</button>
           </div>
 
           <div class="quick-actions">
             <h3>Quick Actions</h3>
             <button id="reload-btn">Reload Page</button>
             <button id="default-url-btn">Load Default URL</button>
+          </div>          
+
+          <div class="barcode-history-section">
+            <h3>Barcode History</h3>
+            <div id="barcode-history-list" class="history-list">
+              <p class="empty-history">No scans yet</p>
+            </div>
           </div>
+
         </div>
       </div>
 

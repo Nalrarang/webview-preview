@@ -1,51 +1,81 @@
 const { invoke } = window.__TAURI__.core;
 
+// Constants
+const DEFAULT_URL_KEY = "defaultUrl";
+const DEFAULT_FALLBACK_URL = "https://alpha.wms.kakaostyle.com";
+const SHOW_BARCODE_KEY = "showBarcodeInput";
+const MAX_HISTORY_ITEMS = 8;
+
+// DOM Elements
 let urlInputEl;
 let devtoolsCheckboxEl;
 let alwaysOnTopCheckboxEl;
-let jsInputEl;
-let statusMsgEl;
+let showBarcodeCheckboxEl;
 let loadingScreen;
 let controlPanel;
 let barcodeInputEl;
+let barcodeContainer;
+let barcodeHistoryList;
+let defaultUrlDisplay;
+
+// State
+let barcodeHistory = []; // Session-only storage
+
+// ============================================================================
+// URL Management
+// ============================================================================
 
 async function loadUrl() {
   const url = urlInputEl.value.trim();
-
-  if (!url) {
-    return;
-  }
+  if (!url) return;
 
   try {
-    await invoke("navigate_to_url", { url: url });
+    await invoke("navigate_to_url", { url });
     hideLoadingScreen();
   } catch (error) {
     console.error("Navigation error:", error);
   }
 }
 
-async function executeJS() {
-  const jsCode = jsInputEl.value.trim();
+function getDefaultUrl() {
+  return localStorage.getItem(DEFAULT_URL_KEY) || DEFAULT_FALLBACK_URL;
+}
 
-  if (!jsCode) {
-    return;
+function updateDefaultUrlDisplay() {
+  const savedUrl = localStorage.getItem(DEFAULT_URL_KEY);
+  if (savedUrl) {
+    defaultUrlDisplay.textContent = savedUrl;
+    defaultUrlDisplay.style.color = "#0f0f0f";
+  } else {
+    defaultUrlDisplay.textContent = `${DEFAULT_FALLBACK_URL} (fallback)`;
+    defaultUrlDisplay.style.color = "#999";
   }
+}
 
-  try {
-    await invoke("execute_js_in_webview", { jsCode: jsCode });
-  } catch (error) {
-    console.error("JS execution error:", error);
-  }
+function setDefaultUrl() {
+  const currentUrl = urlInputEl.value.trim();
+  if (!currentUrl) return;
+
+  localStorage.setItem(DEFAULT_URL_KEY, currentUrl);
+  updateDefaultUrlDisplay();
+  alert(`Default URL set to:\n${currentUrl}`);
+}
+
+function clearDefaultUrl() {
+  localStorage.removeItem(DEFAULT_URL_KEY);
+  urlInputEl.value = DEFAULT_FALLBACK_URL;
+  updateDefaultUrlDisplay();
+  alert("Default URL cleared. Reset to fallback URL.");
 }
 
 function loadDefaultUrl() {
-  urlInputEl.value = "https://alpha.wms.kakaostyle.com";
+  urlInputEl.value = getDefaultUrl();
   loadUrl();
 }
 
-function reloadWebView() {
-  loadUrl();
-}
+// ============================================================================
+// DevTools & Window Controls
+// ============================================================================
 
 async function toggleDevTools() {
   try {
@@ -69,25 +99,24 @@ function hideLoadingScreen() {
   }
 }
 
+// ============================================================================
+// Menu Controls
+// ============================================================================
+
 async function toggleMenu() {
   const isOpen = controlPanel.classList.contains("open");
+  const newWidth = isOpen ? 375 : 725;
 
   if (isOpen) {
-    // 메뉴 닫기: 375px로 축소, 웹뷰 위치 유지 (0, 0)
     controlPanel.classList.remove("open");
-    try {
-      await invoke("resize_window", { width: 375, height: 667 });
-    } catch (error) {
-      console.error("Failed to close menu:", error);
-    }
   } else {
-    // 메뉴 열기: 725px로 확장, 웹뷰 위치 유지 (0, 0)
     controlPanel.classList.add("open");
-    try {
-      await invoke("resize_window", { width: 725, height: 667 });
-    } catch (error) {
-      console.error("Failed to open menu:", error);
-    }
+  }
+
+  try {
+    await invoke("resize_window", { width: newWidth, height: 667 });
+  } catch (error) {
+    console.error("Failed to toggle menu:", error);
   }
 }
 
@@ -100,18 +129,95 @@ async function closeMenu() {
   }
 }
 
-async function scanBarcode() {
-  const barcode = barcodeInputEl.value.trim();
+// ============================================================================
+// Barcode Input Management
+// ============================================================================
 
-  if (!barcode) {
+async function toggleBarcodeInput() {
+  const isVisible = showBarcodeCheckboxEl.checked;
+  const webviewHeight = isVisible ? 617 : 667;
+
+  localStorage.setItem(SHOW_BARCODE_KEY, String(isVisible));
+  barcodeContainer.style.display = isVisible ? "flex" : "none";
+
+  try {
+    await invoke("resize_webview", { width: 375, height: webviewHeight });
+  } catch (error) {
+    console.error("Failed to resize webview:", error);
+  }
+}
+
+async function loadBarcodeVisibility() {
+  const savedState = localStorage.getItem(SHOW_BARCODE_KEY);
+  const isVisible = savedState === null ? true : savedState === "true";
+  const webviewHeight = isVisible ? 617 : 667;
+
+  showBarcodeCheckboxEl.checked = isVisible;
+  barcodeContainer.style.display = isVisible ? "flex" : "none";
+
+  try {
+    await invoke("resize_webview", { width: 375, height: webviewHeight });
+  } catch (error) {
+    console.error("Failed to resize webview on load:", error);
+  }
+}
+
+// ============================================================================
+// Barcode History
+// ============================================================================
+
+function addBarcodeToHistory(barcode) {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+
+  barcodeHistory.unshift({ barcode, time: timeString, timestamp: now.getTime() });
+
+  if (barcodeHistory.length > MAX_HISTORY_ITEMS) {
+    barcodeHistory = barcodeHistory.slice(0, MAX_HISTORY_ITEMS);
+  }
+
+  updateHistoryDisplay();
+}
+
+function updateHistoryDisplay() {
+  if (barcodeHistory.length === 0) {
+    barcodeHistoryList.innerHTML = '<p class="empty-history">No scans yet</p>';
     return;
   }
 
-  try {
-    // 웹뷰에서 scanBarcode 함수 실행
-    await invoke("execute_js_in_webview", {
-      jsCode: `scanBarcode('${barcode}')`
+  barcodeHistoryList.innerHTML = barcodeHistory.map((item, index) => `
+    <div class="history-item" data-index="${index}">
+      <span class="history-item-barcode">${item.barcode}</span>
+      <span class="history-item-time">${item.time}</span>
+    </div>
+  `).join('');
+
+  // 히스토리 아이템 클릭 이벤트 추가
+  const historyItems = barcodeHistoryList.querySelectorAll('.history-item');
+  historyItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const index = parseInt(item.getAttribute('data-index'));
+      const historyItem = barcodeHistory[index];
+      if (historyItem) {
+        barcodeInputEl.value = historyItem.barcode;
+        barcodeInputEl.focus();
+      }
     });
+  });
+}
+
+async function scanBarcode() {
+  const barcode = barcodeInputEl.value.trim();
+  if (!barcode) return;
+
+  try {
+    await invoke("execute_js_in_webview", { jsCode: `scanBarcode('${barcode}')` });
+    addBarcodeToHistory(barcode);
     barcodeInputEl.value = "";
     barcodeInputEl.focus();
   } catch (error) {
@@ -119,73 +225,73 @@ async function scanBarcode() {
   }
 }
 
+// ============================================================================
+// Initialization
+// ============================================================================
+
 window.addEventListener("DOMContentLoaded", () => {
+  // Initialize DOM elements
   urlInputEl = document.querySelector("#url-input");
   devtoolsCheckboxEl = document.querySelector("#devtools-checkbox");
   alwaysOnTopCheckboxEl = document.querySelector("#always-on-top-checkbox");
-  jsInputEl = document.querySelector("#js-input");
+  showBarcodeCheckboxEl = document.querySelector("#show-barcode-checkbox");
   loadingScreen = document.querySelector("#loading-screen");
   controlPanel = document.querySelector("#control-panel");
   barcodeInputEl = document.querySelector("#barcode-input");
+  barcodeContainer = document.querySelector("#barcode-container");
+  barcodeHistoryList = document.querySelector("#barcode-history-list");
+  defaultUrlDisplay = document.querySelector("#default-url-display");
 
-  // 메뉴 토글 이벤트
+  // Load saved state
+  urlInputEl.value = getDefaultUrl();
+  updateDefaultUrlDisplay();
+  loadBarcodeVisibility();
+
+  // Menu controls
   document.querySelector("#menu-toggle").addEventListener("click", toggleMenu);
   document.querySelector("#menu-close").addEventListener("click", closeMenu);
 
-  // Always on top 체크박스 이벤트
+  // Settings controls
   alwaysOnTopCheckboxEl.addEventListener("change", toggleAlwaysOnTop);
+  showBarcodeCheckboxEl.addEventListener("change", toggleBarcodeInput);
+  document.querySelector("#set-default-url-btn").addEventListener("click", setDefaultUrl);
+  document.querySelector("#clear-default-url-btn").addEventListener("click", clearDefaultUrl);
 
-  // 폼 이벤트
+  // Form submissions
   document.querySelector("#webview-form").addEventListener("submit", (e) => {
     e.preventDefault();
     loadUrl();
   });
 
-  document.querySelector("#execute-js-btn").addEventListener("click", (e) => {
-    e.preventDefault();
-    executeJS();
-  });
-
-  // 바코드 폼 이벤트
   document.querySelector("#barcode-form").addEventListener("submit", (e) => {
     e.preventDefault();
     scanBarcode();
   });
 
-  // 퀵 액션 이벤트
-  document
-    .querySelector("#reload-btn")
-    .addEventListener("click", reloadWebView);
-  document
-    .querySelector("#default-url-btn")
-    .addEventListener("click", loadDefaultUrl);
+  // Quick actions
+  document.querySelector("#reload-btn").addEventListener("click", loadUrl);
+  document.querySelector("#default-url-btn").addEventListener("click", loadDefaultUrl);
 
-  // 키보드 단축키
+  // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
-    // F12: DevTools 토글
     if (e.key === "F12") {
       e.preventDefault();
       devtoolsCheckboxEl.checked = !devtoolsCheckboxEl.checked;
-      if (devtoolsCheckboxEl.checked) {
-        toggleDevTools();
-      }
+      if (devtoolsCheckboxEl.checked) toggleDevTools();
     }
 
-    // Ctrl/Cmd + K: 메뉴 토글
     if ((e.ctrlKey || e.metaKey) && e.key === "k") {
       e.preventDefault();
       toggleMenu();
     }
 
-    // ESC: 메뉴 닫기
     if (e.key === "Escape") {
       e.preventDefault();
       closeMenu();
     }
   });
 
-  // 로딩 화면을 1초 후에 숨김
-  setTimeout(() => {
-    hideLoadingScreen();
-  }, 1000);
+  // Initial navigation and loading
+  loadUrl();
+  setTimeout(hideLoadingScreen, 1000);
 });

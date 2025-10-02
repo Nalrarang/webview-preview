@@ -1,5 +1,5 @@
 [package]
-name = "mobile-webview-app"
+name = "mobile-webview-preview"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]

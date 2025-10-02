@@ -77,6 +77,14 @@ function loadDefaultUrl() {
 // DevTools & Window Controls
 // ============================================================================
 
+async function createNewWindow() {
+  try {
+    await invoke("create_new_window");
+  } catch (error) {
+    console.error("Failed to create new window:", error);
+  }
+}
+
 async function toggleDevTools() {
   try {
     await invoke("open_devtools");
@@ -269,6 +277,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // Quick actions
+  document.querySelector("#new-window-btn").addEventListener("click", createNewWindow);
   document.querySelector("#reload-btn").addEventListener("click", loadUrl);
   document.querySelector("#default-url-btn").addEventListener("click", loadDefaultUrl);
 
@@ -283,6 +292,11 @@ window.addEventListener("DOMContentLoaded", () => {
     if ((e.ctrlKey || e.metaKey) && e.key === "k") {
       e.preventDefault();
       toggleMenu();
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+      e.preventDefault();
+      createNewWindow();
     }
 
     if (e.key === "Escape") {

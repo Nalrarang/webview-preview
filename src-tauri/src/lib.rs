@@ -1,15 +1,53 @@
-use tauri::{WebviewUrl, WebviewWindowBuilder, LogicalPosition, LogicalSize};
+use tauri::{WebviewUrl, WebviewWindowBuilder, LogicalPosition, LogicalSize, Manager};
 use tauri::webview::WebviewBuilder;
 use url::Url;
+use std::sync::atomic::{AtomicU32, Ordering};
 
-// 헬퍼 함수: 차일드 웹뷰 찾기
+// 전역 창 카운터
+static WINDOW_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+// 헬퍼 함수: 차일드 웹뷰 찾기 (webview-* 패턴으로 검색)
 fn find_child_webview(window: &tauri::Window) -> Result<tauri::Webview, String> {
     for webview in window.webviews() {
-        if webview.label() == "webview" {
+        let label = webview.label();
+        if label.starts_with("webview-") {
             return Ok(webview);
         }
     }
-    Err("Child webview 'webview' not found".to_string())
+    Err("Child webview not found".to_string())
+}
+
+// 새 창 생성 커맨드
+#[tauri::command]
+fn create_new_window(app: tauri::AppHandle) -> Result<(), String> {
+    let window_id = WINDOW_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let window_label = format!("main-{}", window_id);
+    let webview_label = format!("webview-{}", window_id);
+
+    let main_window = WebviewWindowBuilder::new(
+        &app,
+        &window_label,
+        WebviewUrl::App("index.html".into())
+    )
+    .title("Mobile WebView Preview")
+    .inner_size(375.0, 667.0)
+    .position(100.0 + (window_id as f64 * 30.0), 100.0 + (window_id as f64 * 30.0))
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Failed to create window: {}", e))?;
+
+    let window = main_window.as_ref().window();
+    window.add_child(
+        WebviewBuilder::new(
+            &webview_label,
+            WebviewUrl::External(Url::parse("about:blank").unwrap())
+        ),
+        LogicalPosition::new(0.0, 0.0),
+        LogicalSize::new(375.0, 617.0)
+    )
+    .map_err(|e| format!("Failed to add webview: {}", e))?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -62,6 +100,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
+            create_new_window,
             navigate_to_url,
             execute_js_in_webview,
             open_devtools,
@@ -70,10 +109,15 @@ pub fn run() {
             set_always_on_top
         ])
         .setup(|app| {
+            // 고유한 창 ID 생성 (여러 인스턴스 허용)
+            let window_id = WINDOW_COUNTER.fetch_add(1, Ordering::SeqCst);
+            let window_label = format!("main-{}", window_id);
+            let webview_label = format!("webview-{}", window_id);
+
             // 메인 창 생성: 375x667 (웹뷰 617px + 바코드 입력 50px)
             let main_window = WebviewWindowBuilder::new(
                 app,
-                "main",
+                &window_label,
                 WebviewUrl::App("index.html".into())
             )
             .title("Mobile WebView Preview")
@@ -87,7 +131,7 @@ pub fn run() {
             let window = main_window.as_ref().window();
             window.add_child(
                 WebviewBuilder::new(
-                    "webview",
+                    &webview_label,
                     WebviewUrl::External(Url::parse("about:blank").unwrap())
                 ),
                 LogicalPosition::new(0.0, 0.0),

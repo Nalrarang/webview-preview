@@ -1,7 +1,9 @@
 # Mobile WebView Preview App
 
-Tauri 기반의 모바일 웹뷰 컨트롤러로 모바일 웹 애플리케이션의 테스트 및 디버깅을 위한 도구입니다.
-이 도구는 순전히 개입없이 Claude Code를 통해서만 개발되었습니다.
+Tauri 기반의 모바일 웹뷰 컨트롤러로 WMS PDA 또는 모바일 웹 애플리케이션의 테스트 및 디버깅을 위한 도구입니다.
+이 도구는 순수하게 Claude Code를 사용해서 개발되었습니다.(저는 Rust도 모르고 Tauri도 몰라요..)
+
+<img width="1107" height="667" alt="스크린샷 2025-10-14 오후 2 58 45" src="https://github.com/user-attachments/assets/d6e909c0-7bf7-4656-9ed3-92cc608f4a99" />
 
 ## 주요 기능
 

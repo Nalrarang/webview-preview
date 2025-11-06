@@ -1,20 +1,48 @@
-use tauri::{WebviewUrl, WebviewWindowBuilder, LogicalPosition, LogicalSize, Manager};
+use tauri::{WebviewUrl, WebviewWindowBuilder, LogicalPosition, LogicalSize};
 use tauri::webview::WebviewBuilder;
 use url::Url;
 use std::sync::atomic::{AtomicU32, Ordering};
 
 // 전역 창 카운터
 static WINDOW_COUNTER: AtomicU32 = AtomicU32::new(0);
+// 웹뷰 재생성 카운터
+static WEBVIEW_RECREATION_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+// User-Agent 상수
+const MOBILE_USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1";
+const DESKTOP_USER_AGENT: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 // 헬퍼 함수: 차일드 웹뷰 찾기 (webview-* 패턴으로 검색)
+// recreation 웹뷰를 우선적으로 찾고, 없으면 기본 webview-* 찾기
 fn find_child_webview(window: &tauri::Window) -> Result<tauri::Webview, String> {
+    let mut fallback_webview: Option<tauri::Webview> = None;
+    let mut max_recreation_id = -1i32;
+    let mut recreation_webview: Option<tauri::Webview> = None;
+
     for webview in window.webviews() {
         let label = webview.label();
-        if label.starts_with("webview-") {
-            return Ok(webview);
+
+        // webview-recreation-* 패턴 확인 (가장 최신 것 찾기)
+        if label.starts_with("webview-recreation-") {
+            if let Some(id_str) = label.strip_prefix("webview-recreation-") {
+                if let Ok(id) = id_str.parse::<i32>() {
+                    if id > max_recreation_id {
+                        max_recreation_id = id;
+                        recreation_webview = Some(webview.clone());
+                    }
+                }
+            }
+        }
+        // 기본 webview-* 패턴 (fallback용)
+        else if label.starts_with("webview-") && fallback_webview.is_none() {
+            fallback_webview = Some(webview.clone());
         }
     }
-    Err("Child webview not found".to_string())
+
+    // recreation 웹뷰가 있으면 그것을 반환, 없으면 fallback
+    recreation_webview
+        .or(fallback_webview)
+        .ok_or_else(|| "Child webview not found".to_string())
 }
 
 // 새 창 생성 커맨드
@@ -41,7 +69,8 @@ fn create_new_window(app: tauri::AppHandle) -> Result<(), String> {
         WebviewBuilder::new(
             &webview_label,
             WebviewUrl::External(Url::parse("about:blank").unwrap())
-        ),
+        )
+        .user_agent(MOBILE_USER_AGENT),
         LogicalPosition::new(0.0, 0.0),
         LogicalSize::new(375.0, 617.0)
     )
@@ -94,6 +123,47 @@ fn set_always_on_top(window: tauri::Window, always_on_top: bool) -> Result<(), S
         .map_err(|e| format!("Failed to set always on top: {}", e))
 }
 
+#[tauri::command]
+fn set_user_agent(window: tauri::Window, is_mobile: bool, current_url: String) -> Result<(), String> {
+    let user_agent = if is_mobile {
+        MOBILE_USER_AGENT
+    } else {
+        DESKTOP_USER_AGENT
+    };
+
+    // 현재 웹뷰 찾기 및 정보 저장
+    let old_webview = find_child_webview(&window)?;
+    let webview_size = old_webview.size().map_err(|e| format!("Failed to get size: {}", e))?;
+
+    // 기존 웹뷰 닫기 시도
+    let _ = old_webview.close();
+
+    // 새로운 고유 라벨 생성
+    let recreation_id = WEBVIEW_RECREATION_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let new_webview_label = format!("webview-recreation-{}", recreation_id);
+
+    // 새 URL 파싱
+    let url_to_load = if current_url.is_empty() || current_url == "about:blank" {
+        Url::parse("about:blank").unwrap()
+    } else {
+        Url::parse(&current_url).map_err(|e| format!("Invalid URL: {}", e))?
+    };
+
+    // 새 웹뷰 생성 with User-Agent
+    window.add_child(
+        WebviewBuilder::new(
+            &new_webview_label,
+            WebviewUrl::External(url_to_load)
+        )
+        .user_agent(user_agent),
+        LogicalPosition::new(0.0, 0.0),
+        webview_size
+    )
+    .map_err(|e| format!("Failed to create new webview: {}", e))?;
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -106,7 +176,8 @@ pub fn run() {
             open_devtools,
             resize_window,
             resize_webview,
-            set_always_on_top
+            set_always_on_top,
+            set_user_agent
         ])
         .setup(|app| {
             // 고유한 창 ID 생성 (여러 인스턴스 허용)
@@ -128,12 +199,14 @@ pub fn run() {
             .expect("Failed to create main window");
 
             // 차일드 웹뷰 추가 (초기 URL은 about:blank, JavaScript에서 저장된 URL로 네비게이션)
+            // 기본적으로 모바일 User-Agent 설정
             let window = main_window.as_ref().window();
             window.add_child(
                 WebviewBuilder::new(
                     &webview_label,
                     WebviewUrl::External(Url::parse("about:blank").unwrap())
-                ),
+                )
+                .user_agent(MOBILE_USER_AGENT),
                 LogicalPosition::new(0.0, 0.0),
                 LogicalSize::new(375.0, 617.0)
             )

@@ -5,6 +5,7 @@ A Tauri-based mobile webview controller for testing and debugging mobile web app
 ## Features
 
 - **Mobile Device Simulation**: 375x667 viewport (iPhone SE size)
+- **Device Mode Switching**: Toggle between Mobile (iPhone) and Desktop (macOS) User-Agent
 - **Customizable Default URL**: Set and persist your preferred testing URL
 - **Barcode Scanner**: Input and execute barcode scan functions in the webview
 - **Scan History**: Track up to 8 recent barcode scans (session-only)
@@ -47,6 +48,26 @@ pnpm tauri build
 - Stored in localStorage
 - Falls back to `https://alpha.wms.kakaostyle.com`
 
+### Device Mode
+
+- **Mobile Mode**: iPhone User-Agent (iOS 16.6, Safari Mobile)
+- **Desktop Mode**: macOS Chrome User-Agent
+- Stored in localStorage (persists across sessions)
+- Recreates webview when switching modes to apply new User-Agent
+- **How to verify**: Open DevTools (F12) and run `navigator.userAgent` in console
+
+**Testing User-Agent:**
+```javascript
+// In DevTools Console
+console.log(navigator.userAgent);
+
+// Mobile Mode:
+// Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1
+
+// Desktop Mode:
+// Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+```
+
 ### Barcode Input
 
 - Toggle visibility via control panel
@@ -79,6 +100,7 @@ mobile-webview-app/
 ### Storage
 
 - **Default URL**: localStorage (`defaultUrl`)
+- **Device Mode**: localStorage (`deviceMode`)
 - **Barcode Visibility**: localStorage (`showBarcodeInput`)
 - **Scan History**: Session memory (cleared on close)
 

@@ -32,7 +32,7 @@
             <h3>URL Settings</h3>
             <form id="webview-form">
               <div class="default-url-info">
-                <span class="default-url-label">Default URL:</span>
+                <span class="default-url-label">Start Default URL:</span>
                 <span id="default-url-display" class="default-url-value">Not set</span>
               </div>      
 
@@ -44,13 +44,6 @@
                   value="https://alpha.wms.kakaostyle.com"
                   required
                 />
-              </div>
-
-              <div class="checkbox-group">
-                <label>
-                  <input type="checkbox" id="devtools-checkbox" />
-                  Enable DevTools (F12)
-                </label>
               </div>
 
               <div class="checkbox-group">
@@ -67,6 +60,16 @@
                 </label>
               </div>
 
+              <div class="mode-toggle-section">
+                <h4>Device Mode</h4>
+                <button type="button" id="mobile-mode-btn" class="mode-btn active">
+                  📱 
+                </button>
+                <button type="button" id="desktop-mode-btn" class="mode-btn">
+                  💻 
+                </button>
+              </div>
+              <p class="mode-info" id="mode-info">Current: Mobile (iPhone)</p>
               <div class="default-url-section">
                 <button type="button" id="set-default-url-btn" class="secondary-btn">
                   Set as Default URL
@@ -75,7 +78,6 @@
                   Clear URL
                 </button>
               </div>
-
               <button type="submit">Navigate to URL</button>
             </form>
           </div>

@@ -1,8 +1,8 @@
 [package]
 name = "mobile-webview-preview"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.1.1"
+description = "모바일 웹뷰를 편하게 보기 위해 만든 툴입니다."
+authors = ["Nalrarang"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

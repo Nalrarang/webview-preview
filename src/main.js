@@ -4,6 +4,7 @@ const { invoke } = window.__TAURI__.core;
 const DEFAULT_URL_KEY = "defaultUrl";
 const DEFAULT_FALLBACK_URL = "https://alpha.wms.kakaostyle.com";
 const SHOW_BARCODE_KEY = "showBarcodeInput";
+const DEVICE_MODE_KEY = "deviceMode";
 const MAX_HISTORY_ITEMS = 8;
 
 // DOM Elements
@@ -17,9 +18,13 @@ let barcodeInputEl;
 let barcodeContainer;
 let barcodeHistoryList;
 let defaultUrlDisplay;
+let mobileModeBtn;
+let desktopModeBtn;
+let modeInfoEl;
 
 // State
 let barcodeHistory = []; // Session-only storage
+let isMobileMode = true; // Default to mobile mode
 
 // ============================================================================
 // URL Management
@@ -85,14 +90,6 @@ async function createNewWindow() {
   }
 }
 
-async function toggleDevTools() {
-  try {
-    await invoke("open_devtools");
-  } catch (error) {
-    console.error("DevTools error:", error);
-  }
-}
-
 async function toggleAlwaysOnTop() {
   try {
     await invoke("set_always_on_top", { alwaysOnTop: alwaysOnTopCheckboxEl.checked });
@@ -135,6 +132,47 @@ async function closeMenu() {
   } catch (error) {
     console.error("Failed to close menu:", error);
   }
+}
+
+// ============================================================================
+// Device Mode Management
+// ============================================================================
+
+async function setDeviceMode(mobile) {
+  const currentUrl = urlInputEl.value.trim() || "about:blank";
+
+  try {
+    // 웹뷰를 재생성하여 User-Agent 적용
+    await invoke("set_user_agent", {
+      isMobile: mobile,
+      currentUrl: currentUrl
+    });
+
+    isMobileMode = mobile;
+    localStorage.setItem(DEVICE_MODE_KEY, String(mobile));
+    updateModeUI();
+  } catch (error) {
+    console.error("Failed to set device mode:", error);
+    alert(`Failed to switch mode: ${error}`);
+  }
+}
+
+function updateModeUI() {
+  if (isMobileMode) {
+    mobileModeBtn.classList.add("active");
+    desktopModeBtn.classList.remove("active");
+    modeInfoEl.textContent = "Current: Mobile (iPhone)";
+  } else {
+    mobileModeBtn.classList.remove("active");
+    desktopModeBtn.classList.add("active");
+    modeInfoEl.textContent = "Current: Desktop (macOS Chrome)";
+  }
+}
+
+function loadDeviceMode() {
+  const savedMode = localStorage.getItem(DEVICE_MODE_KEY);
+  isMobileMode = savedMode === null ? true : savedMode === "true";
+  updateModeUI();
 }
 
 // ============================================================================
@@ -249,11 +287,15 @@ window.addEventListener("DOMContentLoaded", () => {
   barcodeContainer = document.querySelector("#barcode-container");
   barcodeHistoryList = document.querySelector("#barcode-history-list");
   defaultUrlDisplay = document.querySelector("#default-url-display");
+  mobileModeBtn = document.querySelector("#mobile-mode-btn");
+  desktopModeBtn = document.querySelector("#desktop-mode-btn");
+  modeInfoEl = document.querySelector("#mode-info");
 
   // Load saved state
   urlInputEl.value = getDefaultUrl();
   updateDefaultUrlDisplay();
   loadBarcodeVisibility();
+  loadDeviceMode();
 
   // Menu controls
   document.querySelector("#menu-toggle").addEventListener("click", toggleMenu);
@@ -264,6 +306,10 @@ window.addEventListener("DOMContentLoaded", () => {
   showBarcodeCheckboxEl.addEventListener("change", toggleBarcodeInput);
   document.querySelector("#set-default-url-btn").addEventListener("click", setDefaultUrl);
   document.querySelector("#clear-default-url-btn").addEventListener("click", clearDefaultUrl);
+
+  // Device mode controls
+  mobileModeBtn.addEventListener("click", () => setDeviceMode(true));
+  desktopModeBtn.addEventListener("click", () => setDeviceMode(false));
 
   // Form submissions
   document.querySelector("#webview-form").addEventListener("submit", (e) => {
@@ -283,12 +329,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
-    if (e.key === "F12") {
-      e.preventDefault();
-      devtoolsCheckboxEl.checked = !devtoolsCheckboxEl.checked;
-      if (devtoolsCheckboxEl.checked) toggleDevTools();
-    }
-
     if ((e.ctrlKey || e.metaKey) && e.key === "k") {
       e.preventDefault();
       toggleMenu();
